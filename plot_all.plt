@@ -1,3 +1,5 @@
+##### Produces three views of the same graph on seperate pages in one pdf
+
 set terminal pdfcairo					 # generates output in pdf
 set output "plot_out_all.pdf"				 # output name
 set isosample 80					 # isoline density (grid), high sampling rate = more accurate plots, but takes longer
