@@ -22,7 +22,7 @@ template <typename T> class LAVector {
 		LAVector<T> operator+(const LAVector<T>& rhs);
 		//LAMatrix<T> operator+(const LAMatrix<T>& rhs);
 		LAVector<T> operator-(const LAVector<T>& rhs);
-		T& operator*(const LAVector<T>& rhs);
+		T operator*(const LAVector<T>& rhs);
 		//vector<T> operator->*(const vector<T>& rhs);
 	
 		//Matrix scalar operations

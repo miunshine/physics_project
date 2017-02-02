@@ -24,7 +24,7 @@ LAVector<T>::~LAVector() {} //no memory allocation so done by compiler
 
 //Assignment Operator
 template<typename T>
-LAVector<T>& /*lhs of operator*/ LAVector<T>::operator=(const LAVector<T>& rhs /*righthand*/) {
+LAVector<T>&  LAVector<T>::operator=(const LAVector<T>& rhs) {
 	if (&rhs == this) //this object
 		return *this;  //* - values pointed by this where this is current object
 
@@ -77,9 +77,9 @@ LAVector<T> LAVector<T>::operator-(const LAVector<T>& rhs){
 
 //multiplication dot
 template<typename T>
-T& LAVector<T>::operator*(const LAVector<T>& rhs) {
-	T& mult;
-	for (unsigned i=0; i<this->get_rows(); i++) {
+T LAVector<T>::operator*(const LAVector<T>& rhs) {
+	T mult = 0;
+	for (unsigned i=0; i<this->get_size(); i++) {
 				mult =mult + this->mat[i] * rhs(i);
 	}
 	
