@@ -21,7 +21,7 @@ proxy BandMatrix::operator()(int i, int j)
     return proxy(*this, i - j, std::min(i, j)); //initialise proxy
 }
 
-float BandMatrix::operator()(int i, int j) const //const -> no change of members
+double BandMatrix::operator()(int i, int j) const //const -> no change of members
 {
     int diff = i - j;
     //iterator (pointer) to element pointed by key - the key in the
@@ -37,10 +37,10 @@ float BandMatrix::operator()(int i, int j) const //const -> no change of members
     
 }
 	
-std::vector<float> BandMatrix::operator*(const std::vector<float>& v)
+std::vector<double> BandMatrix::operator*(const std::vector<double>& v)
 {
    	assert(this->m_elements[0].size() == v.size());               //check sizes
-    std::vector<float> retVal(v.size(), 0.f);
+    std::vector<double> retVal(v.size(), 0.f);
     for (const auto& band: this->m_elements) {
         int diff = band.first; 
 	    int min = 0;            
@@ -54,10 +54,10 @@ std::vector<float> BandMatrix::operator*(const std::vector<float>& v)
     return retVal;
 }
 
-LAVector<float> BandMatrix::operator*(const LAVector<float>& v)
+LAVector<double> BandMatrix::operator*(const LAVector<double>& v)
 {
    	assert(this->m_elements[0].size() == v.get_size());               //check sizes
-    LAVector<float> retVal(v.get_size(), 0.f);
+    LAVector<double> retVal(v.get_size(), 0.f);
     //for the number of "pairs" in M - pair is key and vector
     for (const auto& band: this->m_elements) {
         int diff = band.first;   //band.first stores the key- ie the diff i,j
@@ -74,10 +74,10 @@ LAVector<float> BandMatrix::operator*(const LAVector<float>& v)
     return retVal;
 }
 
-std::vector<float> BandMatrix::operator->*(const std::vector<float>& v)
+std::vector<double> BandMatrix::operator->*(const std::vector<double>& v)
 {   
     assert(this->m_elements[0].size() == v.size());
-    std::vector<float> retVal(v.size(), 0.f);
+    std::vector<double> retVal(v.size(), 0.f);
     for (const auto& band: this->m_elements) {
         int diff = band.first;
         int min  = 0;
@@ -91,10 +91,10 @@ std::vector<float> BandMatrix::operator->*(const std::vector<float>& v)
     return retVal;
 }
 
-LAVector<float> BandMatrix::operator->*(const LAVector<float>& v)
+LAVector<double> BandMatrix::operator->*(const LAVector<double>& v)
 {   
     assert(this->m_elements[0].size() == v.get_size());
-    LAVector<float> retVal(v.get_size(), 0.f);
+    LAVector<double> retVal(v.get_size(), 0.f);
     for (const auto& band: this->m_elements) {
         int diff = band.first;
         int min  = 0;
@@ -108,6 +108,17 @@ LAVector<float> BandMatrix::operator->*(const LAVector<float>& v)
     return retVal;
 }
 
+std::vector<double> BandMatrix::diag()
+{
+    return this->m_elements[0];
+}
+/*
+LAVector<double> BandMatrix::diag(BandMatrix M)
+{
+    LAVector<double> result = M.m_elements[0];
+    return result;
+}
+*/
 unsigned BandMatrix::size() const { return m_N; }
 //map::end, map::begin definitions in case band.begin() is called
 	
@@ -131,11 +142,11 @@ BandMatrix::iterator BandMatrix::end() { return m_elements.end(); }
 //to a currently non-existed band (previously zero off diagonal) which is
 //changed. 
 //eg2 a = band(i,j); This is just access to element. Again proxy is returned
-//BUT variable a might be a float (or type T) which means that an operator
-//float() is needed to return element in its specific value that is a float.
+//BUT variable a might be a double (or type T) which means that an operator
+//double() is needed to return element in its specific value that is a float.
 //So t
 
-float& proxy::operator=(float el) {
+double& proxy::operator=(float el) {
 	auto& band = m_mat.m_elements[m_diff]; //key to access map
 	if (band.empty())
 		//m_N - abs(m_diff) is the size of off diagonal vector
@@ -143,8 +154,8 @@ float& proxy::operator=(float el) {
 	return (band[m_min] = el); //returns requested element
 }
 
-proxy::operator float() const {
-	//similar to operator() in bandmatrix but returns a float.
+proxy::operator double() const {
+	//similar to operator() in bandmatrix but returns a double.
         const auto& it = m_mat.m_elements.find(m_diff);
 	if (m_mat.m_elements.end() == it)
 		return 0.f;
@@ -153,7 +164,7 @@ proxy::operator float() const {
 }
 
 //Band matrix creator from 2D stencil
-BandMatrix createFromStencil(unsigned N, float stencil[3][3])
+BandMatrix createFromStencil(unsigned N, double stencil[3][3])
 {
     //N is the grid SIDE size -> N*N is the diagonal size, N^4 is the matrix size 
     //Note that the band matrix is emtpy. When assigning a value the key is created.

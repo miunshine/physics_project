@@ -2,7 +2,8 @@
 #define LA_VECTOR_CPP
 
 #include "vector.h"
-
+#include <cassert>
+#include <random>
 
 //Constructor using parameters
 template<typename T>
@@ -16,6 +17,18 @@ template<typename T>
 LAVector<T>::LAVector(const LAVector<T>& rhs){
 	mat = rhs.mat;
 	rows = rhs.get_size();
+}
+
+//Randomly generated vector - constructor
+template<typename T>
+LAVector<T>::LAVector(unsigned _rows, const char a, const T& min, const T& max) {
+    assert(a == 'r');
+    mat.resize(_rows);
+    rows = _rows;
+    default_random_engine generator;
+    uniform_real_distribution<T> distribution(min, max);
+    for (unsigned i=0; i<rows; i++)
+        mat[i] = distribution(generator);
 }
 
 //Destructor
@@ -44,6 +57,15 @@ LAVector<T>&  LAVector<T>::operator=(const LAVector<T>& rhs) {
 	return *this;
 
 }
+template<typename T>
+LAVector<T>& LAVector<T>::operator=(const std::vector<T>& rhs) {
+    unsigned new_rows = rhs.size();
+    mat.resize(new_rows);
+    for (unsigned i=0; i<new_rows; i++)
+        mat[i] = rhs[i];
+    rows = new_rows;
+    return *this;
+}
 
 /* Operators :
 B + C
@@ -53,7 +75,7 @@ using the constructor "=" we can assign to another object
 So: A = //constructor// B + //B calls operator +// C //gives C as variable
 */
 
-//addition of matrices
+//addition of vectors
 template<typename T>
 //return by reference will create error
 LAVector<T> LAVector<T>::operator+(const LAVector<T>& rhs) {
@@ -66,16 +88,32 @@ LAVector<T> LAVector<T>::operator+(const LAVector<T>& rhs) {
 }
 
 template<typename T>
+LAVector<T>& LAVector<T>::operator+=(const LAVector<T>& rhs) {
+    unsigned rows = rhs.get_size();
+    for (unsigned i=0; i<rows; i++)
+        this -> mat[i] += rhs(i);
+    return *this;
+}
+
+template<typename T>
 LAVector<T> LAVector<T>::operator-(const LAVector<T>& rhs){
 	LAVector total(rows,0.0);
 	
 	for (unsigned i=0; i<rows; i++){
-			total(i) = this->mat[i] + rhs(i);
+			total(i) = this->mat[i] - rhs(i);
 	}
 	return total;
 }
 
-//multiplication dot
+template<typename T>
+LAVector<T>& LAVector<T>::operator-=(const LAVector<T>& rhs) {
+    unsigned rows = rhs.get_size();
+    for (unsigned i=0; i<rows; i++)
+        this -> mat[i] -= rhs(i);
+    return *this;
+}
+
+//dot product
 template<typename T>
 T LAVector<T>::operator*(const LAVector<T>& rhs) {
 	T mult = 0;
@@ -122,7 +160,8 @@ LAVector<T> LAVector<T>::operator/(const T& rhs) {
 	LAVector total(rows,0.0);
 	
 	for (unsigned i=0; i<rows; i++) {
-			total(i) = this->mat[i] / rhs;
+	    assert(rhs!=0);
+        total(i) = this->mat[i] / rhs;
 	}
 
 	return total;
@@ -156,4 +195,23 @@ unsigned LAVector<T>::get_size() const {
 }
 
 
+//Useful for inverse of matrix if vector represents diagonal
+template<typename T>
+void LAVector<T>::inverse(std::vector<T> v) {
+    unsigned n = v.size();
+    this->mat.resize(n,0.0);
+    for (int i=0; i<n; i++) { 
+        if (v[i] == 0) continue;
+        else           this->mat[i] = 1 / v[i];
+    }
+}
+template<typename T>
+void LAVector<T>::inverse(LAVector<T> v) {
+    unsigned n = v.get_size();
+    this->mat.resize(n,0.0);
+    for (int i=0; i<n; i++) { 
+        if (v(i) == 0) continue;
+        else           this->mat[i] = 1 / v(i);
+    }
+}
 #endif

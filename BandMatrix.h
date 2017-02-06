@@ -12,14 +12,14 @@ class proxy {
 	    int m_diff, m_min;
     public:
 	    proxy(BandMatrix& mat, int diff, int min) : m_mat(mat), m_diff(diff), m_min(min) {}
-	    float& operator=(float el);
-	    operator float() const;
+	    double& operator=(float el);
+	    operator double() const;
 };
 
 class BandMatrix{
     public:
         //definitions inside class
-    	typedef std::map<int, std::vector<float> > SparseBands;
+    	typedef std::map<int, std::vector<double> > SparseBands;
     	typedef SparseBands::iterator iterator;
     	typedef SparseBands::const_iterator const_iterator;
     	typedef SparseBands::value_type band_value_type;
@@ -34,12 +34,14 @@ class BandMatrix{
     	BandMatrix(unsigned N);       //initialised constructor
     	proxy operator()(int i, int j);
 
-    	float operator()(int i, int j) const; //const -> no change of members
-    	std::vector<float> operator*(const std::vector<float>& v);
-        LAVector<float> operator*(const LAVector<float>& v);
-        std::vector<float> operator->*(const std::vector<float>& v);
-        LAVector<float> operator->*(const LAVector<float>& v);
+    	double operator()(int i, int j) const; //const -> no change of members
+    	std::vector<double> operator*(const std::vector<double>& v);
+        LAVector<double> operator*(const LAVector<double>& v);
+        std::vector<double> operator->*(const std::vector<double>& v);
+        LAVector<double> operator->*(const LAVector<double>& v);
 
+        std::vector<double> diag();
+        //LAVector<double>    diag(const BandMatrix M);
         unsigned size() const;
 	
     	const_iterator begin() const; 
@@ -49,4 +51,4 @@ class BandMatrix{
 	
 };
 
-BandMatrix createFromStencil(unsigned N, float stencil[3][3]);
+BandMatrix createFromStencil(unsigned N, double stencil[3][3]);

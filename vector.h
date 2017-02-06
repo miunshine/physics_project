@@ -13,15 +13,19 @@ template <typename T> class LAVector {
 	public:
 		LAVector(unsigned _rows, const T& _initial);
 		LAVector(const LAVector<T>& rhs);
-		virtual ~LAVector();
+    	LAVector(unsigned _rows, const char a, const T& min, const T& max); 
+        virtual ~LAVector();
 	
 		//Operator overload
 		LAVector<T>& operator=(const LAVector<T>& rhs);
-		
+	    LAVector<T>& operator=(const std::vector<T>& rhs);
+
 		//Math operations
 		LAVector<T> operator+(const LAVector<T>& rhs);
+        LAVector<T>& operator+=(const LAVector<T>& rhs);
 		//LAMatrix<T> operator+(const LAMatrix<T>& rhs);
 		LAVector<T> operator-(const LAVector<T>& rhs);
+        LAVector<T>& operator-=(const LAVector<T>& rhs);
 		T operator*(const LAVector<T>& rhs);
 		//vector<T> operator->*(const vector<T>& rhs);
 	
@@ -37,7 +41,8 @@ template <typename T> class LAVector {
 		T& get_element(const unsigned& row);
 		
 		unsigned get_size() const;
-
+        void inverse(LAVector<T> v);
+        void inverse(std::vector<T> v);
 };
 
 #include "vector.cpp"
