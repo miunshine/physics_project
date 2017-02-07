@@ -36,7 +36,115 @@ double BandMatrix::operator()(int i, int j) const //const -> no change of member
     return band[std::min(i, j)];  //return the element of the vector
     
 }
-	
+std::vector<double> BandMatrix::get_row(int i)
+{
+    int n = this->size();
+    std::vector<double> result;
+    for (int j=0; j<n; j++){
+        int diff = i - j;
+        const auto& it = m_elements.find(diff);
+        if (m_elements.end() == it)
+            result.push_back(0.f);
+        else
+        {
+            const auto& band = it->second;
+            int minimum = std::min(i, j);
+            result.push_back(band[minimum]);
+        }
+    }
+    return result;
+}
+
+std::vector<double> BandMatrix::get_col(int j)
+{
+    int n = this->size();
+    std::vector<double> result;
+    for (int i=0; i<n; i++) {
+        int diff = i - j;
+        const auto& it = m_elements.find(diff);
+        if (m_elements.end() == it)
+            result.push_back(0.f);
+        else
+        {
+            const auto& band = it->second;
+            int minimum = std::min(i,j);
+            result.push_back(band[minimum]);
+        }
+    }
+    return result;
+}
+
+BandMatrix BandMatrix::operator+(const BandMatrix& v)
+{
+   	assert(this->m_elements[0].size() == v.size());               //check sizes
+    BandMatrix Result(v.size());
+    for (const auto& band: this->m_elements) {
+        int diff = band.first; 
+	    int min = 0;            
+        for (const auto m: band.second) {
+	        int i = (diff >= 0) ? min + diff :        min;
+	        int j = (diff >= 0) ?        min : min - diff; 
+	        if (m + v(i,j) != 0) Result(i,j) = m + v(i,j);
+	        min = min+1;
+	    }
+    }
+    return Result;
+}
+
+BandMatrix& BandMatrix::operator+=(const BandMatrix& v)
+{
+    assert(this->m_elements[0].size() == v.size());
+    for (const auto& band: this->m_elements) {
+        int diff = band.first; 
+	    int min = 0;            
+        for (const auto m: band.second) {
+	        int i = (diff >= 0) ? min + diff :        min;
+	        int j = (diff >= 0) ?        min : min - diff; 
+	        double result = m + v(i,j);
+            if (result != 0) 
+                this->m_elements[diff][min] = result; 
+	        min = min+1;
+	    }
+    }
+    
+    return *this;
+}
+
+BandMatrix BandMatrix::operator-(const BandMatrix& v)
+{
+   	assert(this->m_elements[0].size() == v.size());               //check sizes
+    BandMatrix Result(v.size());
+    for (const auto& band: this->m_elements) {
+        int diff = band.first; 
+	    int min = 0;            
+        for (const auto m: band.second) {
+	        int i = (diff >= 0) ? min + diff :        min;
+	        int j = (diff >= 0) ?        min : min - diff; 
+	        if (m - v(i,j) != 0) Result(i,j) = m - v(i,j);
+	        min = min + 1;
+	    }
+    }
+    return Result;
+}
+
+BandMatrix& BandMatrix::operator-=(const BandMatrix& v)
+{
+    assert(this->m_elements[0].size() == v.size());
+    for (const auto& band: this->m_elements) {
+        int diff = band.first; 
+	    int min = 0;            
+        for (const auto m: band.second) {
+	        int i = (diff >= 0) ? min + diff :        min;
+	        int j = (diff >= 0) ?        min : min - diff; 
+	        double result = m - v(i,j);
+            if (result != 0) 
+                this->m_elements[diff][min] = result; 
+	        min = min+1;
+	    }
+    }
+    
+    return *this;
+}
 std::vector<double> BandMatrix::operator*(const std::vector<double>& v)
 {
    	assert(this->m_elements[0].size() == v.size());               //check sizes
@@ -74,6 +182,7 @@ LAVector<double> BandMatrix::operator*(const LAVector<double>& v)
     return retVal;
 }
 
+//Multiplication of transpose of band matrix with vector
 std::vector<double> BandMatrix::operator->*(const std::vector<double>& v)
 {   
     assert(this->m_elements[0].size() == v.size());
@@ -121,7 +230,24 @@ LAVector<double> BandMatrix::diag(BandMatrix M)
 */
 unsigned BandMatrix::size() const { return m_N; }
 //map::end, map::begin definitions in case band.begin() is called
-	
+/*
+void BandMatrix::ApplyBoundary(const unsigned r) 
+{
+    this->m_elements[0][r] = 1;
+    for (const auto& band: this->m_elements) {
+        int diff = band.first;
+        if (diff == 0) {
+            cout << diff << " changing to 1"<<endl;
+            this->m_elements[diff][r] = 1;
+        }
+        else if (diff<0 && ((r-diff)>=0)){
+            cout << chang
+            this->m_elements[diff][r-diff] = 0;
+        else
+            if (r < m_elements[diff].size()) this->m_elements[diff][r] = 0;
+    }
+}
+*/
 BandMatrix::const_iterator BandMatrix::begin() const { return m_elements.begin(); }
 BandMatrix::const_iterator BandMatrix::end() const { return m_elements.end(); }
 BandMatrix::iterator BandMatrix::begin() { return m_elements.begin(); }
@@ -163,35 +289,33 @@ proxy::operator double() const {
 	return band[m_min];
 }
 
-//Band matrix creator from 2D stencil
-BandMatrix createFromStencil(unsigned N, double stencil[3][3])
+BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv)
 {
     //N is the grid SIDE size -> N*N is the diagonal size, N^4 is the matrix size 
     //Note that the band matrix is emtpy. When assigning a value the key is created.
 
     BandMatrix retVal(N * N);
     for (int i = 0; i < int(N); ++i) {
-	for (int j = 0; j < int(N); ++j) {
-	    unsigned idx = i * int(N) + j;
-	    if (i - 1 >= 0) {
-		//3 values along columns
-		if (j - 1 >= 0 && stencil[0][0]) retVal(idx, idx - int(N) - 1) = stencil[0][0];
-		if (stencil[0][1]) retVal(idx, idx - int(N)) = stencil[0][1];
-		if (j + 1 < int(N) && stencil[0][2]) retVal(idx, idx - int(N) + 1) = stencil[0][2];
-	    }
-	    if (j - 1 >= 0 && stencil[1][0]) retVal(idx, idx - 1) = stencil[1][0];
-	    if (stencil[1][1]) retVal(idx, idx) = stencil[1][1]; //diagonal
-	    if (j + 1 < int(N) && stencil[1][2]) retVal(idx, idx + 1) = stencil[1][2];
-	    if (i + 1 < int(N)) {
-		//again 3 values
-		if (j - 1 >= 0 && stencil[2][0]) retVal(idx, idx + int(N) - 1) = stencil[2][0];
-		if (stencil[2][1]) retVal(idx, idx + int(N)) = stencil[2][1];
-		if (j + 1 < int(N) && stencil[2][2]) retVal(idx, idx + int(N) + 1) = stencil[2][2];
-	    }
-	}
+    	for (int j = 0; j < int(N); ++j) {
+    	    unsigned idx = i * int(N) + j;
+    	    if (i - 1 >= 0) {
+    		//3 values along columns
+    		if (j - 1 >= 0 && stencil[0][0] && flagv(idx)) retVal(idx, idx - int(N) - 1) = stencil[0][0];
+    		if (stencil[0][1] && flagv(idx)) retVal(idx, idx - int(N)) = stencil[0][1];
+    		if (j + 1 < int(N) && stencil[0][2] && flagv(idx)) retVal(idx, idx - int(N) + 1) = stencil[0][2];
+    	    }
+    	    if (j - 1 >= 0 && stencil[1][0] &&flagv(idx)) retVal(idx, idx - 1) = stencil[1][0];
+    	    if (stencil[1][1] && flagv(idx)) retVal(idx, idx) = stencil[1][1]; //diagonal
+            if (stencil[1][1] && flagv(idx) == 0) retVal(idx,idx) = 1.;
+    	    if (j + 1 < int(N) && stencil[1][2] &&flagv(idx)) retVal(idx, idx + 1) = stencil[1][2];
+    	    if (i + 1 < int(N)) {
+    		//again 3 values
+    		if (j - 1 >= 0 && stencil[2][0] && flagv(idx)) retVal(idx, idx + int(N) - 1) = stencil[2][0];
+    		if (stencil[2][1] && flagv(idx)) retVal(idx, idx + int(N)) = stencil[2][1];
+    		if (j + 1 < int(N) && stencil[2][2] && flagv(idx)) retVal(idx, idx + int(N) + 1) = stencil[2][2];
+    	    }
+    	}
     }
     return retVal;
 }
-
-
 // vim: sw=4:tw=78:ft=cpp:et:cindent

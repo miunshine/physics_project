@@ -124,7 +124,16 @@ T LAVector<T>::operator*(const LAVector<T>& rhs) {
 	return mult;
 }
 
-//Row-Indexed scheme multiplication
+//Elementwise multiplication (useful if vector represents diagonal matrix)
+template<typename T>
+LAVector<T> LAVector<T>::operator->*(const LAVector<T> rhs) {
+    LAVector total(rows,0.0);
+	
+	for (unsigned i=0; i<rows; i++){
+			total(i) = this->mat[i] * rhs(i);
+	}
+	return total;
+}
 
 //scalar operators -OVERLOADING-
 template<typename T>

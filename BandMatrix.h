@@ -35,7 +35,13 @@ class BandMatrix{
     	proxy operator()(int i, int j);
 
     	double operator()(int i, int j) const; //const -> no change of members
-    	std::vector<double> operator*(const std::vector<double>& v);
+        std::vector<double> get_row(int i);
+        std::vector<double> get_col(int j);
+        BandMatrix operator+(const BandMatrix& v);
+    	BandMatrix& operator+=(const BandMatrix& v);
+        BandMatrix operator-(const BandMatrix& v);
+        BandMatrix& operator-=(const BandMatrix& v);
+        std::vector<double> operator*(const std::vector<double>& v);
         LAVector<double> operator*(const LAVector<double>& v);
         std::vector<double> operator->*(const std::vector<double>& v);
         LAVector<double> operator->*(const LAVector<double>& v);
@@ -43,12 +49,13 @@ class BandMatrix{
         std::vector<double> diag();
         //LAVector<double>    diag(const BandMatrix M);
         unsigned size() const;
-	
+//	    void ApplyBoundary(const unsigned r);
+
+
     	const_iterator begin() const; 
     	const_iterator end() const; 
     	iterator begin();
     	iterator end();
 	
 };
-
-BandMatrix createFromStencil(unsigned N, double stencil[3][3]);
+BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv);
