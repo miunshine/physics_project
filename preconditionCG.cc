@@ -104,7 +104,7 @@ int main(int argc, char **argv)
             r = b - A * x;
         else
             r -= Ap * alpha;
-        s = r ->* M;
+        s = r ->* M;  //elemntwise multiplication of vectors(defined in vector class)
         rsnew = r * s;
         //if (sqrt(rsnew) < epsilon) break;
         p = s + p * (rsnew / rsold);
