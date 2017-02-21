@@ -289,31 +289,64 @@ proxy::operator double() const {
 	return band[m_min];
 }
 
-BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv)
+BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv, LAVector<int> per_flag)
 {
     //N is the grid SIDE size -> N*N is the diagonal size, N^4 is the matrix size 
     //Note that the band matrix is emtpy. When assigning a value the key is created.
+    //idx is the index of a matrix represented in a vector i*n+j; 
 
     BandMatrix retVal(N * N);
+    int n = int(N);
     for (int i = 0; i < int(N); ++i) {
     	for (int j = 0; j < int(N); ++j) {
     	    unsigned idx = i * int(N) + j;
-    	    if (i - 1 >= 0) {
+/*            if (per_flag(idx)) {
+                if (j==0){ 
+                    if (per_flag(idx-j+(n-1))) retVal(idx, idx-j+(n-2)) = 1.;
+                    continue; }
+                if (i==0) {
+                    if (per_flag(idx - i*n + (n-1)*n))  retVal(idx, idx-i*n+(n-2)*n) = 1.;
+                    continue; }
+                if (j==int(N)-1) { 
+                    if (per_flag(idx-j)) retVal(idx,idx-j+1) = 1.;
+                    continue; }
+                if (i==int(N)-1){
+                    if (per_flag(idx-i*n)) retVal(idx,idx-i*n+n*1)  = 1.; 
+                    continue; }
+            }
+            else if (flagv(idx)==0.) {
+                    retVal(idx,idx) = 1.0;
+                    continue;
+            }
+  */        
+
+            if ((i==0) && per_flag(idx) && per_flag(idx-i*n+(n-1)*n))
+                retVal(idx, idx-i*n+(n-2)*n) = -1.;
+
+            if (i - 1 >= 0) {
     		//3 values along columns
-    		if (j - 1 >= 0 && stencil[0][0] && flagv(idx)) retVal(idx, idx - int(N) - 1) = stencil[0][0];
-    		if (stencil[0][1] && flagv(idx)) retVal(idx, idx - int(N)) = stencil[0][1];
-    		if (j + 1 < int(N) && stencil[0][2] && flagv(idx)) retVal(idx, idx - int(N) + 1) = stencil[0][2];
-    	    }
-    	    if (j - 1 >= 0 && stencil[1][0] &&flagv(idx)) retVal(idx, idx - 1) = stencil[1][0];
+        		if (j - 1 >= 0 && stencil[0][0] && flagv(idx)) retVal(idx, idx - int(N) - 1) = stencil[0][0];
+                if (stencil[0][1] && flagv(idx)) retVal(idx, idx - int(N)) = stencil[0][1];
+        		if (j + 1 < int(N) && stencil[0][2] && flagv(idx)) retVal(idx, idx - int(N) + 1) = stencil[0][2];
+            }
+    	    if ((j==0) && per_flag(idx) && per_flag(idx-j+n-1)) 
+                retVal(idx, idx-j+n-2) = -1.;  
+            if (j - 1 >= 0 && stencil[1][0] && flagv(idx)) retVal(idx, idx - 1) = stencil[1][0];
     	    if (stencil[1][1] && flagv(idx)) retVal(idx, idx) = stencil[1][1]; //diagonal
             if (stencil[1][1] && flagv(idx) == 0) retVal(idx,idx) = 1.;
-    	    if (j + 1 < int(N) && stencil[1][2] &&flagv(idx)) retVal(idx, idx + 1) = stencil[1][2];
-    	    if (i + 1 < int(N)) {
+    	    if (j + 1 < int(N) && stencil[1][2] && flagv(idx)) retVal(idx, idx + 1) = stencil[1][2];
+    	    if ((j==(n-1)) && per_flag(idx) && per_flag(idx-j+0))
+                retVal(idx, idx-j+1) = -1.;
+            if ((i==(n-1)) && per_flag(idx) && per_flag(idx - i*n)) 
+                retVal(idx, idx-i*n+n*1) = -1.;
+            if (i + 1 < int(N)) {
     		//again 3 values
-    		if (j - 1 >= 0 && stencil[2][0] && flagv(idx)) retVal(idx, idx + int(N) - 1) = stencil[2][0];
-    		if (stencil[2][1] && flagv(idx)) retVal(idx, idx + int(N)) = stencil[2][1];
-    		if (j + 1 < int(N) && stencil[2][2] && flagv(idx)) retVal(idx, idx + int(N) + 1) = stencil[2][2];
-    	    }
+    	    	if (j - 1 >= 0 && stencil[2][0] && flagv(idx)) retVal(idx, idx + int(N) - 1) = stencil[2][0];
+    	    	if (stencil[2][1] && flagv(idx)) retVal(idx, idx + int(N)) = stencil[2][1];
+    	    	if (j + 1 < int(N) && stencil[2][2] && flagv(idx)) retVal(idx, idx + int(N) + 1) = stencil[2][2];
+            }
+                        //    retVal(idx, n+j) = -1.;
+                        
     	}
     }
     return retVal;

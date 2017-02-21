@@ -58,4 +58,4 @@ class BandMatrix{
     	iterator end();
 	
 };
-BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv);
+BandMatrix createFromStencil(unsigned N, double stencil[3][3],LAVector<int> flagv,LAVector<int> per_flag);

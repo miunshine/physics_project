@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <cassert>
+#include <cmath>
 
 #include "vector.h"
 #include "BandMatrix.h"
@@ -13,7 +14,8 @@ using namespace cv;
 using namespace std;
 
 int main(int argc, char **argv)
-{
+{	
+    double permittivity =  8.854188 * pow(10,-12);
 	Mat image;
 	double positive_val, negative_val, charge;
     double stencil[3][3] = {
@@ -24,12 +26,12 @@ int main(int argc, char **argv)
     ofstream fout("output.dat");
     image = imread(argv[1], 1);
 
+    // -- Input --
 	cout << "Insert value of positive voltage: " << endl;
 	cin >> positive_val;
 	cout << "Insert absolute value of negative voltage: " << endl;
 	cin >> negative_val;
-	negative_val = abs(negative_val);
-	cout << "Give charge value: " << endl;
+	cout << "Give density charge value: " << endl;
     cin >> charge;
 
 	if ( !image.data )
@@ -37,19 +39,24 @@ int main(int argc, char **argv)
         	printf("No image data \n");
         	return -1;
 	}
-	//   namedWindow("Display Image", WINDOW_AUTOSIZE );
+	
+    //   namedWindow("Display Image", WINDOW_AUTOSIZE );
 	//    imshow("Display Image", image);
 	
 	//    waitKey(0);
-	assert(image.cols == image.rows);
+	
+    assert(image.cols == image.rows);
     int n = image.cols;
-	    
+	
+    // -- Image part --
+    printf("Reading Image\n");
 	unsigned char *input = (unsigned char*)(image.data);
 	int red,green,blue;
 	Vec3b intensity;
     
     LAVector<double> b(n*n, 0.0);
     LAVector<int>    flag(n*n, 1.0);
+    LAVector<int>    periodic_edge(n*n, 0.0);
 
 	for (int i = 0; i<n;i++){
 		for (int j = 0; j < n;j++){
@@ -57,6 +64,7 @@ int main(int argc, char **argv)
 			blue  = intensity.val[0];
         	green = intensity.val[1] ;
         	red   = intensity.val[2] ;
+
 			if ((blue>150) && (red<150) && (green<150))
 			{
                 b(i*n+j) = -negative_val;
@@ -74,18 +82,37 @@ int main(int argc, char **argv)
             }
 			else if ((blue<150) && (red<150) && (green>150))
 			{
-				b(i*n+j) = charge;
+				b(i*n+j) = charge / permittivity;
+            }
+            
+            else if (blue>150 && red>150 && green>150)
+            {
+                if (j == 0) {
+                    periodic_edge(i*n+j)= 1;
+                }
+                if (j == (n-1)) {
+                    periodic_edge(i*n+j) = 1;
+                }
+                if (i == 0) {
+                    periodic_edge(i*n+j) = 1;
+                }
+                if (i == (n-1)){
+                    periodic_edge(i*n+j) = 1;
+                }
             }
 
-		}
+        }
 	}	
     
-    BandMatrix A = createFromStencil(n, stencil, flag);
+    // -- CG Solver Part -- 
+    
+    printf("Starting Solver\n");
+    BandMatrix A = createFromStencil(n, stencil, flag,periodic_edge);
     std::vector<double> Mi = A.diag();
     LAVector<double> M(n*n, 0.0);
     M.inverse(Mi);
-    
-    LAVector<double> x(n*n, 0.0);
+
+    LAVector<double> x = b;
     LAVector<double> r = b - A * x;
     LAVector<double> s(n*n, 0.0);
     LAVector<double > Ap(n*n,0.0);
@@ -100,25 +127,24 @@ int main(int argc, char **argv)
         Ap = A * p;
         alpha = rsold / (p * Ap);
         x += p * alpha;
-        if (count % 50) 
+        if (count == int(n)) 
             r = b - A * x;
         else
             r -= Ap * alpha;
+        
         s = r ->* M;  //elemntwise multiplication of vectors(defined in vector class)
         rsnew = r * s;
-        //if (sqrt(rsnew) < epsilon) break;
         p = s + p * (rsnew / rsold);
         rsold = rsnew;
     }
     
     printf("count is %d \n", count);
-//    for (int i= 0; i<x.get_size(); i++)
-//       fout << x(i) << " ";
-//    fout << endl;
-  
+    printf("Magnitude of residual is %f \n\n", sqrt(rsold));
+    printf("Saving Results\n");
+
     for (int i = 0; i< n; i++) {
-        for (int j = 0; j< n; j++)
-            fout << i << " " << j << " " << x(i*n+j) << endl;
+        for (int j = 0; j <n ; j++)
+            fout << i << " " << j << " " << x(i*n+(n-1-j)) << endl;
     }
 
 	return 0;

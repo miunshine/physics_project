@@ -27,8 +27,9 @@ LAVector<T>::LAVector(unsigned _rows, const char a, const T& min, const T& max) 
     rows = _rows;
     default_random_engine generator;
     uniform_real_distribution<T> distribution(min, max);
-    for (unsigned i=0; i<rows; i++)
+    for (unsigned i=0; i<rows; i++){
         mat[i] = distribution(generator);
+    }
 }
 
 //Destructor
